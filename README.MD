@@ -109,6 +109,30 @@ Now that our configuration manager is initialized, we should notice that a new f
 
 The configuration manager always makes config files with the name of the annotated class in all lowercase letters. When a config file exists already the manager will read all values from it and apply them to the @Configurable class.
 
+## Adding a custom parser
+
+To add a custom parser, you would need to create a class implementing IParser and then register it to the manager:
+```java
+package your.packagename.here;
+
+import dev.JustRed23.abcm.parsing.IParser;
+
+public final class RainbowParser implements IParser<Rainbow> {
+
+    public Rainbow parse(String value) {
+        return Rainbows.getRainbow(value);
+    }
+
+    public List<Class<?>> canParse() {
+        return List.of(Rainbow.class);
+    }
+}
+```
+
+We register the parser to the configuration manager by calling `Config.addParser(Class<? extends IParser>)`. Remember to call `rescan(true)` if you already initialized the manager!
+<br>
+You *can now add a field with the type Rainbow to your @Configurable class and it will be parsed by the RainbowParser.*
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
