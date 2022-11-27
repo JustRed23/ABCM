@@ -84,6 +84,8 @@ public final class Config {
 
     /**
      * Adds a parser to the list of parsers.
+     * <br>
+     * <b>NOTE:</b> This method requires you to call {@link #rescan} for all values to update correctly.
      * @param clazz The class of the parser to add. This must extend {@link IParser}.
      */
     public static void addParser(@NotNull Class<? extends IParser> clazz) {
@@ -178,7 +180,7 @@ public final class Config {
     }
 
     /**
-     * Rescans all packages for configurables, this is useful if you called {@link #addScannable(String)} after the config system has been initialized already.
+     * Rescans all packages for configurables, this is useful if you called {@link #addScannable(String)} or {@link #addParser(Class)} after the config system has been initialized already.
      * @param force If true, the config system will not check if a rescan is actually needed
      * @throws ConfigInitException If the config directory does not exist
      * @throws ConfigNotInitializedException If the config system has not been initialized yet
@@ -265,7 +267,14 @@ public final class Config {
                 boolean optional = configField.optional();
 
                 try {
-                    field.set(field.getType(), parsers.get(field.getType()).parse(defaultValue));
+                    IParser<?> parser = parsers.get(field.getType());
+
+                    if (parser == null) {
+                        debug("\t\t\t\tNo parser found for type {}, skipping", field.getType().getSimpleName());
+                        return;
+                    }
+
+                    field.set(field.getType(), parser.parse(defaultValue));
                 } catch (Exception e) {
                     debug("\t\t\tERROR: Could not set field {} to it's default value: {}", field.getName(), e.getMessage());
                 }
