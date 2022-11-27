@@ -1,0 +1,38 @@
+plugins {
+    id 'java-library'
+}
+
+group 'dev.JustRed23'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //APACHE COMMONS LANG3
+    api 'org.apache.commons:commons-lang3:3.12.0'
+
+    //JETBRAINS ANNOTATIONS
+    api 'org.jetbrains:annotations:23.0.0'
+
+    //REFLECTIONS
+    api 'org.reflections:reflections:0.10.2'
+
+    //SLF4J API
+    api 'org.slf4j:slf4j-api:2.0.4'
+
+
+    //TESTING
+
+    //JUNIT
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+
+    //LOGBACK CLASSIC
+    testImplementation 'ch.qos.logback:logback-classic:1.4.5'
+}
+
+test {
+    useJUnitPlatform()
+}
