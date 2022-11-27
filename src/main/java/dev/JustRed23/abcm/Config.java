@@ -159,7 +159,6 @@ public final class Config {
         } else debug("Config directory already exists");
 
         subHeader("Adding type parsers");
-        parsers.clear();
         mapParsers();
 
         subHeader("Scanning packages");
