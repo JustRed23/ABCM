@@ -1,5 +1,6 @@
 package dev.JustRed23.abcm.parsing;
 
+import java.util.Arrays;
 import java.util.List;
 
 public final class StringParser implements IParser<String> {
@@ -9,6 +10,6 @@ public final class StringParser implements IParser<String> {
     }
 
     public List<Class<?>> canParse() {
-        return List.of(String.class);
+        return Arrays.asList(String.class);
     }
 }

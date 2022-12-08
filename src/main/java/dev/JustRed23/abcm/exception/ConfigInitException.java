@@ -1,5 +1,6 @@
 package dev.JustRed23.abcm.exception;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public class ConfigInitException extends Exception {
     }
 
     public ConfigInitException(String message, Throwable... causes) {
-        this(message, List.of(causes));
+        this(message, Arrays.asList(causes));
     }
 
     public ConfigInitException(String message, List<Throwable> causes) {

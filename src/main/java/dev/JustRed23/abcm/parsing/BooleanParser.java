@@ -1,5 +1,6 @@
 package dev.JustRed23.abcm.parsing;
 
+import java.util.Arrays;
 import java.util.List;
 
 public final class BooleanParser implements IParser<Boolean> {
@@ -9,6 +10,6 @@ public final class BooleanParser implements IParser<Boolean> {
     }
 
     public List<Class<?>> canParse() {
-        return List.of(boolean.class, Boolean.class);
+        return Arrays.asList(boolean.class, Boolean.class);
     }
 }

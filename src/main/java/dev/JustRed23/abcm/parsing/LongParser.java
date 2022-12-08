@@ -1,5 +1,6 @@
 package dev.JustRed23.abcm.parsing;
 
+import java.util.Arrays;
 import java.util.List;
 
 public final class LongParser implements IParser<Long> {
@@ -9,6 +10,6 @@ public final class LongParser implements IParser<Long> {
     }
 
     public List<Class<?>> canParse() {
-        return List.of(long.class, Long.class);
+        return Arrays.asList(long.class, Long.class);
     }
 }

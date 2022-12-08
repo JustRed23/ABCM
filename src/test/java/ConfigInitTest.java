@@ -3,6 +3,7 @@ import dev.JustRed23.abcm.exception.ConfigAlreadyInitializedException;
 import dev.JustRed23.abcm.exception.ConfigInitException;
 import dev.JustRed23.abcm.exception.ConfigNotInitializedException;
 import org.junit.jupiter.api.Test;
+import testpkg.TestConfig;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,6 +14,7 @@ class ConfigInitTest {
     void testConfig() {
         System.out.println("TEST 1");
         Config.setDebug(true);
+        Config.addScannable(TestConfig.class);
         assertDoesNotThrow(Config::init);
         Config.destroy();
     }

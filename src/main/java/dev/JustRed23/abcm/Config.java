@@ -237,7 +237,7 @@ public final class Config {
 
     //Helper methods
     private static void mapParsers() {
-        Reflections reflections = new Reflections(IParser.class.getPackageName());
+        Reflections reflections = new Reflections(IParser.class.getPackage().getName());
         reflections.getSubTypesOf(IParser.class).forEach(Config::addParser);
     }
 
@@ -256,7 +256,14 @@ public final class Config {
             debug("\t\tLooking for fields annotated with {}", ConfigField.class.getSimpleName());
             List<TripletMap<Field, String, Boolean>> fieldsWithDefaults = new ArrayList<>();
             Arrays.stream(configClass.getDeclaredFields()).forEach(field -> {
-                if (!field.trySetAccessible() || !field.isAnnotationPresent(ConfigField.class))
+                try {
+                    field.setAccessible(true);
+                } catch (Exception e) {
+                    debug("\t\t\tERROR: Failed to set field '{}' accessible: {}", field.getName(), e.getMessage());
+                    return;
+                }
+
+                if (!field.isAccessible() || !field.isAnnotationPresent(ConfigField.class))
                     return;
 
                 debug("\t\t\tFound field {} of type {}, setting to default value", field.getName(), field.getType().getSimpleName());
@@ -334,7 +341,7 @@ public final class Config {
                     boolean optional = triplet.third();
 
                     debug("Setting field {}", fieldName);
-                    String value = prop.getProperty(fieldName);
+                    String value = prop.getProperty(fieldName, null);
 
                     if (value == null) {
                         if (optional) {
@@ -347,7 +354,7 @@ public final class Config {
                         }
                     }
 
-                    if (value.isBlank())
+                    if (value.trim().isEmpty())
                         value = defaultValue;
 
                     try {

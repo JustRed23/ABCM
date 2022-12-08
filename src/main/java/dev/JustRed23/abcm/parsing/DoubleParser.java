@@ -1,5 +1,6 @@
 package dev.JustRed23.abcm.parsing;
 
+import java.util.Arrays;
 import java.util.List;
 
 public final class DoubleParser implements IParser<Double> {
@@ -9,6 +10,6 @@ public final class DoubleParser implements IParser<Double> {
     }
 
     public List<Class<?>> canParse() {
-        return List.of(double.class, Double.class);
+        return Arrays.asList(double.class, Double.class);
     }
 }
