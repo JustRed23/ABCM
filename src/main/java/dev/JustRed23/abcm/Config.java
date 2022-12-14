@@ -17,7 +17,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Config {
 
@@ -218,6 +220,33 @@ public final class Config {
     }
 
     /**
+     * Saves all modified {@link ConfigField}s to the config file. If no changes have been made, this method will do nothing.
+     * <br>
+     * To change a value, you can just simply set the {@link ConfigField} to a new value
+     * @throws ConfigInitException If the config directory does not exist
+     * @throws ConfigNotInitializedException If the config system has not been initialized yet
+     */
+    public static void save() throws ConfigInitException {
+        if (!INITIALIZED)
+            throw new ConfigNotInitializedException();
+
+        if (!configDir.exists())
+            throw new ConfigInitException("Config directory does not exist");
+
+        StopWatch stopWatch = new StopWatch();
+        header("Saving configurations");
+        stopWatch.start();
+
+        if (configurations.isEmpty())
+            debug("Nothing to save");
+        else
+            updateFiles();
+
+        stopWatch.stop();
+        header("Saved configurations in {}ms", stopWatch.getTime());
+    }
+
+    /**
      * Destroy the config system, this will remove all configurables and parsers and set all setting to default but will not remove the already set fields.
      * @throws ConfigNotInitializedException If the config system has not been initialized yet
      */
@@ -319,6 +348,69 @@ public final class Config {
                 debug("\tCreated file {}", cfgName);
             } catch (IOException e) {
                 debug("\tERROR: Could not create file {}: {}", cfgName, e.getMessage());
+            }
+        });
+    }
+
+    private static void updateFiles() {
+        configurations.keySet().forEach(aClass -> {
+            String name = aClass.getSimpleName();
+            File configFile = new File(configDir, name.toLowerCase() + ".cfg");
+            String cfgName = configFile.getName();
+
+            debug("Updating file {}", cfgName);
+            if (!configFile.exists()) {
+                debug("\tERROR: File {} does not exist", cfgName);
+                return;
+            }
+
+            AtomicBoolean fileChanged = new AtomicBoolean(false);
+
+            try {
+                List<String> lines = Files.readAllLines(configFile.toPath());
+                List<String> newLines = new ArrayList<>();
+                configurations.get(aClass).forEach(triplet -> {
+                    Field field = triplet.first();
+                    String defaultValue = triplet.second();
+                    boolean optional = triplet.third();
+                    Object fieldValue = null;
+                    try {
+                        fieldValue = field.get(field.getType());
+                    } catch (IllegalAccessException e) {
+                        debug("\tERROR: Could not get value of field {}: {}", field.getName(), e.getMessage());
+                        fieldValue = defaultValue;
+                    }
+
+                    if (fieldValue == null) {
+                        if (optional)
+                            return;
+                        debug("\tERROR: Field {} is not optional but has no value, setting to default value", field.getName());
+                        fieldValue = defaultValue;
+                    }
+
+                    String line = field.getName() + "=" + fieldValue;
+                    if (lines.contains(line)) {
+                        newLines.add(line);
+                        return;
+                    }
+
+                    debug("\tField {} has changed, updating", field.getName());
+                    newLines.add(line);
+                    fileChanged.set(true);
+                });
+
+                if (!fileChanged.get()) {
+                    debug("\tNo changes found");
+                    return;
+                }
+
+                PrintWriter pw = new PrintWriter(configFile);
+                newLines.forEach(pw::println);
+                pw.flush();
+                pw.close();
+                debug("\tUpdated file {}", cfgName);
+            } catch (Exception e) {
+                debug("\tERROR: Could not update file {}: {}", cfgName, e.getMessage());
             }
         });
     }
