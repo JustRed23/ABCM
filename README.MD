@@ -93,6 +93,10 @@ public class HelloWorld {
         //If the manager was initialized already, and you wanted to add another package, we can call a rescan.
         //This will rescan all packages added by addScannable(String);
         Config.rescan(true);
+        
+        //Let's see what we can do if we change the value of a field
+        TestConfig.GREETING = "Hello, mom!";
+        Config.save(); //This will save all the modified values to the respective files, making them persistent.
 
         //And finally, when we are done we obviously tidy up the place!
 
@@ -124,7 +128,7 @@ public final class RainbowParser implements IParser<Rainbow> {
     }
 
     public List<Class<?>> canParse() {
-        return List.of(Rainbow.class);
+        return Arrays.asList(Rainbow.class);
     }
 }
 ```
