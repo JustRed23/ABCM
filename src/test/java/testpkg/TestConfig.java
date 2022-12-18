@@ -9,7 +9,7 @@ public class TestConfig {
     @ConfigField(defaultValue = "world")
     public static String hello;
 
-    @ConfigField(defaultValue = "true")
+    @ConfigField(defaultValue = "true", description = "This is a test")
     public static boolean test;
 
     @ConfigField(defaultValue = "1")

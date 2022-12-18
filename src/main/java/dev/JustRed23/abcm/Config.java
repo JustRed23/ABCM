@@ -4,7 +4,7 @@ import dev.JustRed23.abcm.exception.ConfigAlreadyInitializedException;
 import dev.JustRed23.abcm.exception.ConfigInitException;
 import dev.JustRed23.abcm.exception.ConfigNotInitializedException;
 import dev.JustRed23.abcm.parsing.IParser;
-import dev.JustRed23.abcm.util.TripletMap;
+import dev.JustRed23.abcm.util.ConfigFieldMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public final class Config {
     /**
      * A map containing all scanned configuration classes and a list of their fields, default values and if the configuration is optional.
      */
-    private static final Map<Class<?>, List<TripletMap<Field, String, Boolean>>> configurations = new HashMap<>();
+    private static final Map<Class<?>, List<ConfigFieldMap>> configurations = new HashMap<>();
 
     /**
      * A list containing all packages that will be scanned for configuration classes.
@@ -283,7 +283,7 @@ public final class Config {
         annotated.forEach(configClass -> {
             debug("\tFound config class: {}", configClass.getSimpleName());
             debug("\t\tLooking for fields annotated with {}", ConfigField.class.getSimpleName());
-            List<TripletMap<Field, String, Boolean>> fieldsWithDefaults = new ArrayList<>();
+            List<ConfigFieldMap> fieldsWithDefaults = new ArrayList<>();
             Arrays.stream(configClass.getDeclaredFields()).forEach(field -> {
                 try {
                     field.setAccessible(true);
@@ -300,6 +300,7 @@ public final class Config {
                 ConfigField configField = field.getAnnotation(ConfigField.class);
                 String defaultValue = configField.defaultValue();
                 boolean optional = configField.optional();
+                String description = configField.description().trim();
 
                 try {
                     IParser<?> parser = parsers.get(field.getType());
@@ -313,7 +314,7 @@ public final class Config {
                 } catch (Exception e) {
                     debug("\t\t\tERROR: Could not set field {} to it's default value: {}", field.getName(), e.getMessage());
                 }
-                fieldsWithDefaults.add(TripletMap.of(field, defaultValue, optional));
+                fieldsWithDefaults.add(ConfigFieldMap.of(field, defaultValue, optional, description));
             });
             configurations.put(configClass, fieldsWithDefaults);
         });
@@ -337,9 +338,13 @@ public final class Config {
                 }
 
                 PrintWriter pw = new PrintWriter(configFile);
-                configurations.get(aClass).forEach(triplet -> {
-                    Field field = triplet.first();
-                    String defaultValue = triplet.second();
+                configurations.get(aClass).forEach(map -> {
+                    Field field = map.getField();
+                    String defaultValue = map.getDefaultValue();
+                    String description = map.getDescription();
+
+                    if (!description.isEmpty())
+                        pw.println("# " + description);
 
                     pw.println(field.getName() + "=" + defaultValue);
                 });
@@ -368,12 +373,15 @@ public final class Config {
 
             try {
                 List<String> lines = Files.readAllLines(configFile.toPath());
+                lines.removeIf(line -> line.startsWith("# "));
+
                 List<String> newLines = new ArrayList<>();
-                configurations.get(aClass).forEach(triplet -> {
-                    Field field = triplet.first();
-                    String defaultValue = triplet.second();
-                    boolean optional = triplet.third();
-                    Object fieldValue = null;
+                configurations.get(aClass).forEach(map -> {
+                    Field field = map.getField();
+                    String defaultValue = map.getDefaultValue();
+                    boolean optional = map.isOptional();
+                    String description = map.getDescription();
+                    Object fieldValue;
                     try {
                         fieldValue = field.get(field.getType());
                     } catch (IllegalAccessException e) {
@@ -390,11 +398,15 @@ public final class Config {
 
                     String line = field.getName() + "=" + fieldValue;
                     if (lines.contains(line)) {
+                        if (!description.isEmpty())
+                            newLines.add("# " + description);
                         newLines.add(line);
                         return;
                     }
 
                     debug("\tField {} has changed, updating", field.getName());
+                    if (!description.isEmpty())
+                        newLines.add("# " + description);
                     newLines.add(line);
                     fileChanged.set(true);
                 });
@@ -426,11 +438,11 @@ public final class Config {
             try (FileInputStream fis = new FileInputStream(configFile)) {
                 prop.load(fis);
 
-                configurations.get(aClass).forEach(triplet -> {
-                    Field field = triplet.first();
+                configurations.get(aClass).forEach(map -> {
+                    Field field = map.getField();
                     String fieldName = field.getName();
-                    String defaultValue = triplet.second();
-                    boolean optional = triplet.third();
+                    String defaultValue = map.getDefaultValue();
+                    boolean optional = map.isOptional();
 
                     debug("Setting field {}", fieldName);
                     String value = prop.getProperty(fieldName, null);

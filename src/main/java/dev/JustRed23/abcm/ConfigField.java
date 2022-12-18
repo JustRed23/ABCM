@@ -18,4 +18,10 @@ public @interface ConfigField {
      * If it is not present, the default value will be used.
      */
     boolean optional() default false;
+
+    /**
+     * A description for your field. This will show up in the config file.
+     * If you don't want a description, just leave it empty.
+     */
+    String description() default "";
 }
