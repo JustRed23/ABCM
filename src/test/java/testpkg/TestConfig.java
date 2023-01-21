@@ -3,11 +3,16 @@ package testpkg;
 import dev.JustRed23.abcm.ConfigField;
 import dev.JustRed23.abcm.Configurable;
 
+import java.util.List;
+
 @Configurable
 public class TestConfig {
 
     @ConfigField(defaultValue = "world")
     public static String hello;
+
+    @ConfigField(defaultValue = "test,one,two")
+    public static List<String> listTest;
 
     @ConfigField(defaultValue = "true", description = "This is a test")
     public static boolean test;

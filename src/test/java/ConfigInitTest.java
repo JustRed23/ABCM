@@ -49,4 +49,17 @@ class ConfigInitTest {
         Config.save();
         Config.destroy();
     }
+
+    @Test
+    void testList() throws ConfigInitException {
+        System.out.println("TEST 4");
+        Config.setDebug(true);
+        Config.addScannable(TestConfig.class);
+        Config.init();
+        assertEquals(3, TestConfig.listTest.size());
+        assertEquals("test", TestConfig.listTest.get(0));
+        assertEquals("one", TestConfig.listTest.get(1));
+        assertEquals("two", TestConfig.listTest.get(2));
+        Config.destroy();
+    }
 }

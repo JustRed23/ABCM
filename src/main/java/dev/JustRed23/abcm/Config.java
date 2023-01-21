@@ -3,7 +3,9 @@ package dev.JustRed23.abcm;
 import dev.JustRed23.abcm.exception.ConfigAlreadyInitializedException;
 import dev.JustRed23.abcm.exception.ConfigInitException;
 import dev.JustRed23.abcm.exception.ConfigNotInitializedException;
+import dev.JustRed23.abcm.exception.ConfigParseException;
 import dev.JustRed23.abcm.parsing.IParser;
+import dev.JustRed23.abcm.parsing.ListParser;
 import dev.JustRed23.abcm.util.ConfigFieldMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -20,6 +22,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public final class Config {
 
@@ -310,7 +313,9 @@ public final class Config {
                         return;
                     }
 
+                    ListParser.defaultValue = true;
                     field.set(field.getType(), parser.parse(defaultValue));
+                    ListParser.defaultValue = false;
                 } catch (Exception e) {
                     debug("\t\t\tERROR: Could not set field {} to it's default value: {}", field.getName(), e.getMessage());
                 }
@@ -322,6 +327,8 @@ public final class Config {
     }
 
     private static void makeFiles() {
+        List<Exception> exceptions = new ArrayList<>();
+
         configurations.keySet().forEach(aClass -> {
             String name = aClass.getSimpleName();
             File configFile = new File(configDir, name.toLowerCase() + ".cfg");
@@ -346,7 +353,13 @@ public final class Config {
                     if (!description.isEmpty())
                         pw.println("# " + description);
 
-                    pw.println(field.getName() + "=" + defaultValue);
+                    ListParser.defaultValue = true;
+                    try {
+                        pw.println(field.getName() + "=" + parsers.get(field.getType()).save(defaultValue));
+                    } catch (ConfigParseException e) {
+                        exceptions.add(e);
+                    }
+                    ListParser.defaultValue = false;
                 });
                 pw.flush();
                 pw.close();
@@ -355,9 +368,17 @@ public final class Config {
                 debug("\tERROR: Could not create file {}: {}", cfgName, e.getMessage());
             }
         });
+
+        if (!exceptions.isEmpty()) {
+            Exception configex = new Exception("Failed to save default values to config files");
+            exceptions.forEach(configex::addSuppressed);
+            throw new RuntimeException(configex);
+        }
     }
 
     private static void updateFiles() {
+        List<Exception> exceptions = new ArrayList<>();
+
         configurations.keySet().forEach(aClass -> {
             String name = aClass.getSimpleName();
             File configFile = new File(configDir, name.toLowerCase() + ".cfg");
@@ -396,7 +417,17 @@ public final class Config {
                         fieldValue = defaultValue;
                     }
 
-                    String line = field.getName() + "=" + fieldValue;
+                    ListParser.defaultValue = fieldValue.equals(defaultValue);
+                    String line;
+                    try {
+                        line = field.getName() + "=" + parsers.get(field.getType()).save(fieldValue);
+                    } catch (ConfigParseException e) {
+                        exceptions.add(e);
+                        ListParser.defaultValue = false;
+                        return;
+                    }
+                    ListParser.defaultValue = false;
+
                     if (lines.contains(line)) {
                         if (!description.isEmpty())
                             newLines.add("# " + description);
@@ -425,6 +456,12 @@ public final class Config {
                 debug("\tERROR: Could not update file {}: {}", cfgName, e.getMessage());
             }
         });
+
+        if (!exceptions.isEmpty()) {
+            Exception configex = new Exception("Could not update config files");
+            exceptions.forEach(configex::addSuppressed);
+            throw new RuntimeException(configex);
+        }
     }
 
     private static void apply() throws ConfigInitException {
@@ -462,10 +499,15 @@ public final class Config {
                         value = defaultValue;
 
                     try {
+                        ListParser.defaultValue = value.equals(defaultValue);
                         field.set(field.getType(), parsers.get(field.getType()).parse(value));
+                        ListParser.defaultValue = false;
                     } catch (IllegalAccessException e) {
                         debug("ERROR: Could not set field {} to it's value: {}", fieldName, e.getMessage());
                         exceptions.add(new ConfigInitException("Could not set field " + fieldName + " to it's value", e));
+                    } catch (ConfigParseException e) {
+                        debug("ERROR: Could not parse value of field {}: {}", fieldName, e.getMessage());
+                        exceptions.add(new ConfigInitException("Could not parse value of field " + fieldName, e));
                     }
                 });
             } catch (IOException e) {
@@ -474,8 +516,11 @@ public final class Config {
             }
         });
 
-        if (!exceptions.isEmpty())
-            throw new ConfigInitException("Could not initialize configurables, check your terminal for more information", exceptions);
+        if (!exceptions.isEmpty()) {
+            ConfigInitException initex = new ConfigInitException("Could not initialize configurables, check your terminal for more information");
+            exceptions.forEach(initex::addSuppressed);
+            throw initex;
+        }
     }
 
     private static boolean rescanNeeded() {

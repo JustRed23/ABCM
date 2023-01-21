@@ -22,6 +22,8 @@ dependencies {
     //SLF4J API
     api 'org.slf4j:slf4j-api:2.0.4'
 
+    //JSON
+    api 'org.json:json:20210307'
 
     //TESTING
 
