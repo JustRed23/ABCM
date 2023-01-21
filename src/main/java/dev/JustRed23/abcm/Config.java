@@ -329,8 +329,11 @@ public final class Config {
         List<Exception> exceptions = new ArrayList<>();
 
         configurations.keySet().forEach(aClass -> {
-            String name = aClass.getSimpleName();
-            File configFile = new File(configDir, name.toLowerCase() + ".cfg");
+            String name = aClass.getSimpleName().toLowerCase();
+            Configurable configurable = aClass.getAnnotation(Configurable.class);
+            if (configurable != null && !configurable.name().trim().isEmpty())
+                name = configurable.name().trim();
+            File configFile = new File(configDir, name + ".cfg");
             String cfgName = configFile.getName();
 
             debug("File {} {}", cfgName, configFile.exists() ? "already exists" : "does not exist, creating it");
