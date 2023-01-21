@@ -57,6 +57,8 @@ public final class TestConfig {
     public static boolean SPECIAL;
 }
 ```
+<b>Note: You can give your config file a name by passing 'name = "yourname"' in @Configurable</b>
+<br><br>
 When a class is created and annotated with @Configurable, the class will be picked up in the scanning process and all the respective values will be set, you can simply call TestConfig.GREETING and it will return a value. But we first have to initialize the configuration manager.
 
 Let's create our main class:
