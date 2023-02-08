@@ -382,8 +382,11 @@ public final class Config {
         List<Exception> exceptions = new ArrayList<>();
 
         configurations.keySet().forEach(aClass -> {
-            String name = aClass.getSimpleName();
-            File configFile = new File(configDir, name.toLowerCase() + ".cfg");
+            String name = aClass.getSimpleName().toLowerCase();
+            Configurable configurable = aClass.getAnnotation(Configurable.class);
+            if (configurable != null && !configurable.name().trim().isEmpty())
+                name = configurable.name().trim();
+            File configFile = new File(configDir, name + ".cfg");
             String cfgName = configFile.getName();
 
             debug("Updating file {}", cfgName);
@@ -469,8 +472,11 @@ public final class Config {
     private static void apply() throws ConfigInitException {
         List<Throwable> exceptions = new ArrayList<>();
         configurations.keySet().forEach(aClass -> {
-            String name = aClass.getSimpleName();
-            File configFile = new File(configDir, name.toLowerCase() + ".cfg");
+            String name = aClass.getSimpleName().toLowerCase();
+            Configurable configurable = aClass.getAnnotation(Configurable.class);
+            if (configurable != null && !configurable.name().trim().isEmpty())
+                name = configurable.name().trim();
+            File configFile = new File(configDir, name + ".cfg");
             String cfgName = configFile.getName();
 
             Properties prop = new Properties();
