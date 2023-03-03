@@ -23,6 +23,7 @@ class ConfigInitTest {
         System.out.println("TEST 2");
         assertThrows(ConfigNotInitializedException.class, () -> Config.rescan(false));
         Config.setDebug(true);
+        assertThrows(IllegalArgumentException.class, () -> Config.addScannable(PackagelessTestConfig.class));
         Config.init();
         assertThrows(ConfigAlreadyInitializedException.class, Config::init);
         assertThrows(ConfigAlreadyInitializedException.class, () -> Config.setDebug(false));

@@ -58,10 +58,13 @@ public final class Config {
     //Settings
     /**
      * Adds a package to the list of packages that will be scanned for configuration classes.
+     * <br><b>NOTE - The class must be in a package!</b>
      * @see #addScannable(String)
      * @param pkgClass The class that is in the package that will be scanned
      */
     public static void addScannable(@NotNull Class<?> pkgClass) {
+        if (pkgClass.getPackage() == null)
+            throw new IllegalArgumentException("The class " + pkgClass.getName() + " is not in a package");
         addScannable(pkgClass.getPackage());
     }
 
