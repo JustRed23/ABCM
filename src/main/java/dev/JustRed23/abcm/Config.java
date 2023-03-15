@@ -518,7 +518,7 @@ public final class Config {
                         exceptions.add(new ConfigInitException("Could not set field " + fieldName + " to it's value", e));
                     } catch (ConfigParseException e) {
                         debug("ERROR: Could not parse value of field {}: {}", fieldName, e.getMessage());
-                        exceptions.add(new ConfigInitException("Could not parse value of field " + fieldName, e));
+                        exceptions.add(new ConfigInitException("Could not parse value of field " + fieldName + ": " + e.getMessage()));
                     }
                 });
             } catch (IOException e) {
